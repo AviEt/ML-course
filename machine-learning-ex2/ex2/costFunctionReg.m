@@ -18,7 +18,18 @@ grad = zeros(size(theta));
 %               derivatives of the cost w.r.t. each parameter in theta
 
 
+costTerm1 = (-y) .* log(sigmoid(X*theta));
+costTerm2 = (1-y) .* log(1 - sigmoid(X*theta));
 
+theta_without_first_param = theta(2:length(theta))
+non_regulated_cost = sum(costTerm1 .- costTerm2) / m;
+cost_regulation_factor = (lambda / (2*m)) * sum(theta_without_first_param.^2);
+
+J = non_regulated_cost + cost_regulation_factor;
+
+grad = sum((sigmoid(X*theta) .- y) .* X) / m;
+gradiant_regulation_factor = (lambda / m) * theta_without_first_param';
+grad(:,2:length(grad))=grad(:,2:length(grad)) + gradiant_regulation_factor;
 
 
 
