@@ -64,35 +64,43 @@ Theta2_grad = zeros(size(Theta2));
 
 % Calculate a3 (we're allowed to assume 1 hidden layer)
 a1 = [ones(m, 1) X];
+
 z2 = a1 * Theta1';
 a2 = sigmoid(z2);
-a2 = [ones(m,1) a2];
+a2 = [ones(size(a2,1), 1) a2];
 
 z3 = a2 * Theta2';
 a3 = sigmoid(z3);
+hThetaX = a3;
 
-% Create a truth matrix for y results
-y = repmat([1:num_labels], m, 1) == repmat(y, 1, num_labels);
+yVec = zeros(m,num_labels);
 
-% Calculate the cost using a3 (algorithm output) and y
-costTerm1 = (-y) .* log(a3);
-costTerm2 = (1-y) .* log(1 - a3);
-non_regulated_cost = sum(sum(costTerm1 .- costTerm2)) / m;
+for i = 1:m
+    yVec(i,y(i)) = 1;
+end
 
-%%% Calculate regulazation factor
-% Remove the param for the bias unit
-theta1_without_first_param = Theta1(:,2:end);
-theta2_without_first_param = Theta2(:,2:end);
+% for i = 1:m
+%     
+%     term1 = -yVec(i,:) .* log(hThetaX(i,:));
+%     term2 = (ones(1,num_labels) - yVec(i,:)) .* log(ones(1,num_labels) - hThetaX(i,:));
+%     J = J + sum(term1 - term2);
+%     
+% end
+% 
+% J = J / m;
 
-reg_factor1 = sum(sum(theta1_without_first_param.^2));
-reg_factor2 = sum(sum(theta2_without_first_param.^2));
-cost_regulation_factor = (lambda / (2*m)) * (reg_factor1 + reg_factor2);
+J = 1/m * sum(sum(-1 * yVec .* log(hThetaX)-(1-yVec) .* log(1-hThetaX)));
 
-J = non_regulated_cost + cost_regulation_factor;
+regularator = (sum(sum(Theta1(:,2:end).^2)) + sum(sum(Theta2(:,2:end).^2))) * (lambda/(2*m));
 
-capital_delta1 = zeros(size(Theta1));
-capital_delta2 = zeros(size(Theta2));
-for t=1:m
+J = J + regularator;
+
+%% Part 2 implementation
+
+
+
+for t = 1:m
+
 	% For the input layer, where l=1:
 	a1 = [1; X(t,:)'];
 
@@ -113,10 +121,9 @@ for t=1:m
 	% delta_1 is not calculated because we do not associate error with the input    
 
 	% Big delta update
-	capital_delta1 = capital_delta1 + delta_2 * a1';
-	capital_delta2 = capital_delta2 + delta_3 * a2';
-  
-end;
+	Theta1_grad = Theta1_grad + delta_2 * a1';
+	Theta2_grad = Theta2_grad + delta_3 * a2';
+end
 
 Theta1_grad = (1/m) * Theta1_grad + (lambda/m) * [zeros(size(Theta1, 1), 1) Theta1(:,2:end)];
 Theta2_grad = (1/m) * Theta2_grad + (lambda/m) * [zeros(size(Theta2, 1), 1) Theta2(:,2:end)];
